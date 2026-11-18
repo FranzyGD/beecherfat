@@ -1,7 +1,6 @@
-const START_DATE = new Date("2026-11-19T00:00:00");
-const now = new Date();
-const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-const calculatedDay = Math.round((todayMidnight - START_DATE) / 86400000) + 1;
+const START_EPOCH_MS = new Date("2026-11-18T19:00:00-03:00").getTime();
+const diffMs = Date.now() - START_EPOCH_MS;
+const calculatedDay = diffMs >= 0 ? Math.floor(diffMs / 86400000) + 1 : 1;
 
 const urlParams = new URLSearchParams(window.location.search);
 const currentDayNumber = parseInt(urlParams.get("day")) || Math.max(1, calculatedDay);
