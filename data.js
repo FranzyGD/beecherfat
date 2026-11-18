@@ -34,6 +34,7 @@ const dailyData = {
         { names: ["artificial dream"], label: "Rare" },
         { names: ["omicron"], label: "Deep Cut" },
         { names: ["kosetsu"], label: "Deep Cut" },
+        { names: ["moment"], label: "Deep Cut" },
         { names: ["biden circles"], label: "One in a Krillion" }
       ]
     },
