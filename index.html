@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Fuckdle</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="game-container">
+
+    <div id="intro-section" class="prompt-section">
+      <h1 class="logo-title">Fuckdle</h1>
+      <p class="instruction">6 YAGA related prompts, Have fun I promise i only half vibecoded this.</p>
+      <div class="controls" style="margin-top: 24px;">
+        <button id="play-btn" class="big-btn">Play</button>
+      </div>
+    </div>
+    
+    <div id="prompt-1-section" class="prompt-section hidden">
+      <header>
+        <div class="prompt-badge">1 of 6</div>
+        <h1>Prompt #1: Who said this?</h1>
+        <p class="instruction">Name the person who sent this message.</p>
+      </header>
+
+      <div class="status-bar">
+        <div class="timer-box">
+          ⏱️ Time Left: <span id="p1-timer-display">15</span>s
+        </div>
+      </div>
+
+      <div class="discord-card">
+        <img id="discord-img" src="" alt="Discord Message">
+      </div>
+
+      <div id="p1-input-area" class="input-row">
+        <input type="text" id="p1-input" placeholder="Enter name..." autocomplete="off">
+        <button id="p1-submit-btn">Submit</button>
+      </div>
+
+      <div id="p1-result-card" class="result-card hidden">
+        <div id="p1-emoji" class="result-emoji">🟩</div>
+        <button id="p1-next-btn">Next Prompt ➡️</button>
+      </div>
+    </div>
+
+    <div id="prompt-2-section" class="prompt-section hidden">
+      <header>
+        <div class="prompt-badge">2 of 6</div>
+        <h1>Prompt #2: Draw bro</h1>
+        <p class="instruction">Trace the outline before the timer runs out. Noob.</p>
+      </header>
+
+      <div class="status-bar">
+        <div class="timer-box">
+          ⏱️ Time Left: <span id="timer-display">10</span>s
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="paintCanvas" width="400" height="400"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="done-btn">Done</button>
+      </div>
+
+      <div id="result-card" class="result-card hidden">
+        <div id="result-emoji" class="result-emoji">🎯</div>
+        <p id="result-stats">0% Accuracy</p>
+        <button id="p2-next-btn">Next Prompt ➡️</button>
+      </div>
+    </div>
+
+    <div id="prompt-3-section" class="prompt-section hidden">
+      <header>
+        <div class="prompt-badge">3 of 6</div>
+        <h1>Prompt #3: Match the Images</h1>
+        <p class="instruction">Find all 4 matching pairs, you'll get a better score if you go faster.</p>
+      </header>
+
+      <div class="status-bar">
+        <div class="timer-box">
+          ⏱️ Time: <span id="p3-timer-display">0.0</span>s
+        </div>
+      </div>
+
+      <div id="memory-grid" class="memory-grid"></div>
+
+      <div id="p3-result-card" class="result-card hidden">
+        <div id="p3-result-emoji" class="result-emoji">🎯</div>
+        <p id="p3-result-stats">0.0s</p>
+        <button id="p3-next-btn">Next Prompt ➡️</button>
+      </div>
+    </div>
+
+    <div id="prompt-4-section" class="prompt-section hidden">
+      <header>
+        <div class="prompt-badge">4 of 6</div>
+        <h1 id="p4-title">Prompt #4: Name a game we played</h1>
+        <p id="p4-instruction" class="instruction">Rarer and more obscure answers score higher. Common answers sink.</p>
+      </header>
+
+      <div class="status-bar">
+        <div class="timer-box">
+          ⏱️ Time Left: <span id="p4-timer-display">15</span>s
+        </div>
+      </div>
+
+      <div id="p4-input-area" class="input-row">
+        <input type="text" id="p4-input" placeholder="Type your answer..." autocomplete="off">
+        <button id="p4-submit-btn">Submit</button>
+      </div>
+
+      <div id="p4-result-card" class="result-card hidden">
+        <div id="p4-result-emoji" class="result-emoji">🎯</div>
+        <p id="p4-result-stats">Rarity</p>
+        <button id="p4-next-btn">Next Prompt ➡️</button>
+      </div>
+    </div>
+
+    <div id="prompt-5-section" class="prompt-section hidden">
+      <header>
+        <div class="prompt-badge">5 of 6</div>
+        <h1>Prompt #5: Draw again</h1>
+        <p class="instruction">Time to draw again. Noob.</p>
+      </header>
+
+      <div class="status-bar">
+        <div class="timer-box">
+          ⏱️ Time Left: <span id="p5-timer-display">10</span>s
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="p5-paintCanvas" width="400" height="400"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="p5-done-btn">Done</button>
+      </div>
+
+      <div id="p5-result-card" class="result-card hidden">
+        <div id="p5-result-emoji" class="result-emoji">🎯</div>
+        <p id="p5-result-stats">0% Accuracy</p>
+        <button id="p5-next-btn">Next Prompt ➡️</button>
+      </div>
+    </div>
+
+    <div id="prompt-6-section" class="prompt-section hidden">
+      <header>
+        <div class="prompt-badge">6 of 6</div>
+        <h1>Prompt #6: Who ate this?</h1>
+        <p class="instruction">Name the person who posted this in #food-posting.</p>
+      </header>
+
+      <div class="status-bar">
+        <div class="timer-box">
+          ⏱️ Time Left: <span id="p6-timer-display">15</span>s
+        </div>
+      </div>
+
+      <div class="discord-card">
+        <img id="p6-food-img" src="" alt="Food photo">
+      </div>
+
+      <div id="p6-input-area" class="input-row">
+        <input type="text" id="p6-input" placeholder="Enter name..." autocomplete="off">
+        <button id="p6-submit-btn">Submit</button>
+      </div>
+
+      <div id="p6-result-card" class="result-card hidden">
+        <div id="p6-result-emoji" class="result-emoji">🟩</div>
+        <p id="p6-result-stats"></p>
+        <button id="p6-next-btn">View Results 🏆</button>
+      </div>
+    </div>
+
+    <div id="final-screen" class="prompt-section hidden">
+      <header>
+        <h1 class="logo-title">Fuckdle #<span id="final-day-num">1</span></h1>
+        <p class="instruction">Here are your results for today.</p>
+      </header>
+
+      <div class="final-emojis-row" id="final-emojis-row"></div>
+
+      <div class="words-container">
+        <div class="words-header-row">
+          <div class="words-header">Click words to add to your poem:</div>
+          <button id="reroll-words-btn" class="small-btn">Reroll (2 left) 🎲</button>
+        </div>
+        <div class="words-chips" id="words-chips"></div>
+      </div>
+
+      <div class="poem-builder-container">
+        <div class="words-header">Your Poem:</div>
+        <div id="poem-assembled" class="poem-assembled">
+          <span class="poem-placeholder">Click words above to assemble your poem...</span>
+        </div>
+        <div class="poem-controls">
+          <button id="clear-poem-btn" class="small-btn">Clear Poem</button>
+        </div>
+      </div>
+
+      <div class="share-box">
+        <pre id="share-text-preview" class="share-preview"></pre>
+        <button id="copy-share-btn">Copy Result 📋</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
