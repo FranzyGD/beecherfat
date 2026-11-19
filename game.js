@@ -352,12 +352,19 @@ function renderScene() {
   }
 
   ctx.strokeStyle = "#f4f4f5";
+  ctx.fillStyle = "#f4f4f5";
   ctx.lineWidth = 5;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
   for (const stroke of strokes) {
-    if (stroke.length < 2) continue;
+    if (stroke.length === 0) continue;
+    if (stroke.length === 1) {
+      ctx.beginPath();
+      ctx.arc(stroke[0].x, stroke[0].y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
     ctx.beginPath();
     ctx.moveTo(stroke[0].x, stroke[0].y);
     for (let i = 1; i < stroke.length; i++) {
@@ -371,8 +378,8 @@ renderScene();
 
 function getCanvasPos(e) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
+  const scaleX = rect.width ? (canvas.width / rect.width) : 1;
+  const scaleY = rect.height ? (canvas.height / rect.height) : 1;
   return {
     x: (e.clientX - rect.left) * scaleX,
     y: (e.clientY - rect.top) * scaleY
@@ -381,8 +388,11 @@ function getCanvasPos(e) {
 
 canvas.addEventListener("pointerdown", (e) => {
   if (!isPlaying) return;
+  e.preventDefault();
   isDrawing = true;
-  canvas.setPointerCapture(e.pointerId);
+  try {
+    canvas.setPointerCapture(e.pointerId);
+  } catch (err) {}
 
   const pos = getCanvasPos(e);
   currentStroke = [pos];
@@ -395,6 +405,7 @@ canvas.addEventListener("pointerdown", (e) => {
 
 canvas.addEventListener("pointermove", (e) => {
   if (!isPlaying || !isDrawing) return;
+  e.preventDefault();
 
   const pos = getCanvasPos(e);
   currentStroke.push(pos);
@@ -412,9 +423,12 @@ canvas.addEventListener("pointermove", (e) => {
 
 canvas.addEventListener("pointerup", (e) => {
   if (!isDrawing) return;
+  e.preventDefault();
   isDrawing = false;
   lastPoint = null;
-  canvas.releasePointerCapture(e.pointerId);
+  try {
+    canvas.releasePointerCapture(e.pointerId);
+  } catch (err) {}
 });
 
 canvas.addEventListener("pointercancel", () => {
@@ -840,12 +854,19 @@ function renderScene5() {
   }
 
   p5Ctx.strokeStyle = "#f4f4f5";
+  p5Ctx.fillStyle = "#f4f4f5";
   p5Ctx.lineWidth = 5;
   p5Ctx.lineCap = "round";
   p5Ctx.lineJoin = "round";
 
   for (const stroke of p5Strokes) {
-    if (stroke.length < 2) continue;
+    if (stroke.length === 0) continue;
+    if (stroke.length === 1) {
+      p5Ctx.beginPath();
+      p5Ctx.arc(stroke[0].x, stroke[0].y, 2.5, 0, Math.PI * 2);
+      p5Ctx.fill();
+      continue;
+    }
     p5Ctx.beginPath();
     p5Ctx.moveTo(stroke[0].x, stroke[0].y);
     for (let i = 1; i < stroke.length; i++) {
@@ -859,8 +880,8 @@ renderScene5();
 
 function getCanvasPos5(e) {
   const rect = p5Canvas.getBoundingClientRect();
-  const scaleX = p5Canvas.width / rect.width;
-  const scaleY = p5Canvas.height / rect.height;
+  const scaleX = rect.width ? (p5Canvas.width / rect.width) : 1;
+  const scaleY = rect.height ? (p5Canvas.height / rect.height) : 1;
   return {
     x: (e.clientX - rect.left) * scaleX,
     y: (e.clientY - rect.top) * scaleY
@@ -869,8 +890,11 @@ function getCanvasPos5(e) {
 
 p5Canvas.addEventListener("pointerdown", (e) => {
   if (!p5IsPlaying) return;
+  e.preventDefault();
   p5IsDrawing = true;
-  p5Canvas.setPointerCapture(e.pointerId);
+  try {
+    p5Canvas.setPointerCapture(e.pointerId);
+  } catch (err) {}
 
   const pos = getCanvasPos5(e);
   p5CurrentStroke = [pos];
@@ -883,6 +907,7 @@ p5Canvas.addEventListener("pointerdown", (e) => {
 
 p5Canvas.addEventListener("pointermove", (e) => {
   if (!p5IsPlaying || !p5IsDrawing) return;
+  e.preventDefault();
 
   const pos = getCanvasPos5(e);
   p5CurrentStroke.push(pos);
@@ -900,9 +925,12 @@ p5Canvas.addEventListener("pointermove", (e) => {
 
 p5Canvas.addEventListener("pointerup", (e) => {
   if (!p5IsDrawing) return;
+  e.preventDefault();
   p5IsDrawing = false;
   p5LastPoint = null;
-  p5Canvas.releasePointerCapture(e.pointerId);
+  try {
+    p5Canvas.releasePointerCapture(e.pointerId);
+  } catch (err) {}
 });
 
 p5Canvas.addEventListener("pointercancel", () => {
