@@ -271,7 +271,7 @@ let timerId = null;
 let strokes = [];
 let currentStroke = [];
 let totalDrawnLength = 0;
-let offTargetLength = 0;
+let onTargetLength = 0;
 let lastPoint = null;
 
 let targetCheckpoints = [];
@@ -284,7 +284,7 @@ function setupDrawingTarget2() {
   if (config && (config.image || (config.points && config.points.length > 0))) {
     if (config.points && config.points.length > 0) {
       targetCheckpoints = config.points.map(p => ({ x: p[0], y: p[1], hit: false }));
-      targetPerimeter = targetCheckpoints.length * 14;
+      targetPerimeter = targetCheckpoints.length * 12;
     }
     if (config.image) {
       const img = new Image();
@@ -455,12 +455,12 @@ function recordAndCheckSegment(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 20) {
+    } else if (d <= 9) {
       isNearShape = true;
     }
   }
-  if (!isNearShape) {
-    offTargetLength += segLen;
+  if (isNearShape) {
+    onTargetLength += segLen;
   }
 }
 
@@ -482,7 +482,7 @@ function startGame() {
   strokes = [];
   currentStroke = [];
   totalDrawnLength = 0;
-  offTargetLength = 0;
+  onTargetLength = 0;
   lastPoint = null;
 
   for (const pt of targetCheckpoints) {
@@ -518,24 +518,26 @@ function endGame() {
   const coveragePercent = Math.round((hitCount / (targetCheckpoints.length || 1)) * 100);
 
   const drawnRatio = totalDrawnLength / (targetPerimeter || 1);
-  let excessPenalty = 0;
+  const onTargetRatio = totalDrawnLength > 0 ? (onTargetLength / totalDrawnLength) : 0;
+
+  let precPenalty = 0;
+  if (onTargetRatio < 0.80) {
+    precPenalty = (0.80 - onTargetRatio) * 120;
+  }
+
+  let lengthPenalty = 0;
   if (drawnRatio > 1.35) {
-    if (drawnRatio <= 2.0) {
-      excessPenalty = Math.round(((drawnRatio - 1.35) / 0.65) * 15);
+    if (drawnRatio <= 1.8) {
+      lengthPenalty = ((drawnRatio - 1.35) / 0.45) * 15;
     } else {
-      excessPenalty = 15 + Math.round((drawnRatio - 2.0) * 35);
+      lengthPenalty = 15 + ((drawnRatio - 1.8) / 0.7) * 45;
+      if (drawnRatio > 2.5) {
+        lengthPenalty += (drawnRatio - 2.5) * 40;
+      }
     }
   }
 
-  let offTargetPenalty = 0;
-  if (totalDrawnLength > 0) {
-    const offTargetRatio = offTargetLength / totalDrawnLength;
-    if (offTargetRatio > 0.3) {
-      offTargetPenalty = Math.round((offTargetRatio - 0.3) * 60);
-    }
-  }
-
-  const finalScore = Math.max(0, Math.min(100, coveragePercent - excessPenalty - offTargetPenalty));
+  const finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - precPenalty - lengthPenalty)));
 
   resultEmoji.innerHTML = getScoreBadge(finalScore);
   resultStats.textContent = `${finalScore}% Accuracy`;
@@ -794,7 +796,7 @@ let p5TimerId = null;
 let p5Strokes = [];
 let p5CurrentStroke = [];
 let p5TotalDrawnLength = 0;
-let p5OffTargetLength = 0;
+let p5OnTargetLength = 0;
 let p5LastPoint = null;
 
 let p5TargetCheckpoints = [];
@@ -807,7 +809,7 @@ function setupDrawingTarget5() {
   if (config && (config.image || (config.points && config.points.length > 0))) {
     if (config.points && config.points.length > 0) {
       p5TargetCheckpoints = config.points.map(p => ({ x: p[0], y: p[1], hit: false }));
-      p5TargetPerimeter = p5TargetCheckpoints.length * 14;
+      p5TargetPerimeter = p5TargetCheckpoints.length * 12;
     }
     if (config.image) {
       const img = new Image();
@@ -968,12 +970,12 @@ function recordAndCheckSegment5(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 20) {
+    } else if (d <= 9) {
       isNearShape = true;
     }
   }
-  if (!isNearShape) {
-    p5OffTargetLength += segLen;
+  if (isNearShape) {
+    p5OnTargetLength += segLen;
   }
 }
 
@@ -995,7 +997,7 @@ function startPrompt5() {
   p5Strokes = [];
   p5CurrentStroke = [];
   p5TotalDrawnLength = 0;
-  p5OffTargetLength = 0;
+  p5OnTargetLength = 0;
   p5LastPoint = null;
 
   for (const pt of p5TargetCheckpoints) {
@@ -1031,24 +1033,26 @@ function endPrompt5() {
   const coveragePercent = Math.round((hitCount / (p5TargetCheckpoints.length || 1)) * 100);
 
   const drawnRatio = p5TotalDrawnLength / (p5TargetPerimeter || 1);
-  let excessPenalty = 0;
+  const onTargetRatio = p5TotalDrawnLength > 0 ? (p5OnTargetLength / p5TotalDrawnLength) : 0;
+
+  let precPenalty = 0;
+  if (onTargetRatio < 0.80) {
+    precPenalty = (0.80 - onTargetRatio) * 120;
+  }
+
+  let lengthPenalty = 0;
   if (drawnRatio > 1.35) {
-    if (drawnRatio <= 2.0) {
-      excessPenalty = Math.round(((drawnRatio - 1.35) / 0.65) * 15);
+    if (drawnRatio <= 1.8) {
+      lengthPenalty = ((drawnRatio - 1.35) / 0.45) * 15;
     } else {
-      excessPenalty = 15 + Math.round((drawnRatio - 2.0) * 35);
+      lengthPenalty = 15 + ((drawnRatio - 1.8) / 0.7) * 45;
+      if (drawnRatio > 2.5) {
+        lengthPenalty += (drawnRatio - 2.5) * 40;
+      }
     }
   }
 
-  let offTargetPenalty = 0;
-  if (p5TotalDrawnLength > 0) {
-    const offTargetRatio = p5OffTargetLength / p5TotalDrawnLength;
-    if (offTargetRatio > 0.3) {
-      offTargetPenalty = Math.round((offTargetRatio - 0.3) * 60);
-    }
-  }
-
-  const finalScore = Math.max(0, Math.min(100, coveragePercent - excessPenalty - offTargetPenalty));
+  const finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - precPenalty - lengthPenalty)));
 
   p5ResultEmoji.innerHTML = getScoreBadge(finalScore);
   p5ResultStats.textContent = `${finalScore}% Accuracy`;
