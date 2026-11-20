@@ -60,6 +60,14 @@ const P1_DURATION = 15;
 let p1TimeLeft = P1_DURATION;
 let p1TimerId = null;
 
+discordImg.addEventListener("error", function() {
+  if (this.src.endsWith(".png")) {
+    this.src = this.src.slice(0, -4) + ".PNG";
+  } else if (this.src.endsWith(".PNG")) {
+    this.src = this.src.slice(0, -4) + ".png";
+  }
+});
+
 discordImg.src = activeDay.prompt1.hiddenImage;
 
 function startPrompt1() {
@@ -1358,6 +1366,14 @@ const p6TimerDisplay = document.getElementById("p6-timer-display");
 const P6_DURATION = (activeDay.prompt6 && activeDay.prompt6.duration) || 15;
 let p6TimeLeft = P6_DURATION;
 let p6TimerId = null;
+
+p6FoodImg.addEventListener("error", function() {
+  if (this.src.endsWith(".png")) {
+    this.src = this.src.slice(0, -4) + ".PNG";
+  } else if (this.src.endsWith(".PNG")) {
+    this.src = this.src.slice(0, -4) + ".png";
+  }
+});
 
 if (activeDay.prompt6 && activeDay.prompt6.foodImage) {
   p6FoodImg.src = activeDay.prompt6.foodImage;

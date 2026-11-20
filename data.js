@@ -167,7 +167,7 @@ const dailyData = {
     },
     prompt6: {
       foodImage: "days/day3/food.png",
-      revealedImage: "days/day3/food_revealed.png",
+      revealedImage: "days/day3/food_revealed.PNG",
       acceptedAnswers: ["april","beecher","choner"],
       author: "April"
     }
