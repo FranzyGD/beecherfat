@@ -120,8 +120,8 @@ const resultEmoji = document.getElementById("result-emoji");
 const resultStats = document.getElementById("result-stats");
 
 const GAME_DURATION = activeDay.prompt2.duration || 10;
-const HIT_TOLERANCE = 5;
-const STRAY_DISTANCE = 7;
+const HIT_TOLERANCE = 6;
+const STRAY_DISTANCE = 11;
 
 function getScoreBadge(score) {
   if (score >= 90) {
@@ -525,16 +525,16 @@ function endGame() {
     finalScore = 0;
   } else {
     let underdrawPenalty = 0;
-    if (drawnRatio < 0.85) {
-      underdrawPenalty = (0.85 - drawnRatio) * 80;
+    if (drawnRatio < 0.75) {
+      underdrawPenalty = (0.75 - drawnRatio) * 75;
     }
     let overdrawPenalty = 0;
-    if (drawnRatio > 1.20) {
-      overdrawPenalty = (drawnRatio - 1.20) * 55;
+    if (drawnRatio > 1.25) {
+      overdrawPenalty = (drawnRatio - 1.25) * 50;
     }
     let strayPenalty = 0;
-    if (onTargetRatio < 0.85) {
-      strayPenalty = (0.85 - onTargetRatio) * 60;
+    if (onTargetRatio < 0.80) {
+      strayPenalty = (0.80 - onTargetRatio) * 50;
     }
     finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - underdrawPenalty - overdrawPenalty - strayPenalty)));
   }
@@ -1310,16 +1310,16 @@ function endPrompt5() {
     finalScore = 0;
   } else {
     let underdrawPenalty = 0;
-    if (drawnRatio < 0.85) {
-      underdrawPenalty = (0.85 - drawnRatio) * 80;
+    if (drawnRatio < 0.75) {
+      underdrawPenalty = (0.75 - drawnRatio) * 75;
     }
     let overdrawPenalty = 0;
-    if (drawnRatio > 1.20) {
-      overdrawPenalty = (drawnRatio - 1.20) * 55;
+    if (drawnRatio > 1.25) {
+      overdrawPenalty = (drawnRatio - 1.25) * 50;
     }
     let strayPenalty = 0;
-    if (onTargetRatio < 0.85) {
-      strayPenalty = (0.85 - onTargetRatio) * 60;
+    if (onTargetRatio < 0.80) {
+      strayPenalty = (0.80 - onTargetRatio) * 50;
     }
     finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - underdrawPenalty - overdrawPenalty - strayPenalty)));
   }
