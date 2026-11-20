@@ -120,8 +120,8 @@ const resultEmoji = document.getElementById("result-emoji");
 const resultStats = document.getElementById("result-stats");
 
 const GAME_DURATION = activeDay.prompt2.duration || 10;
-const HIT_TOLERANCE = 7;
-const STRAY_DISTANCE = 10;
+const HIT_TOLERANCE = 5;
+const STRAY_DISTANCE = 7;
 
 function getScoreBadge(score) {
   if (score >= 90) {
