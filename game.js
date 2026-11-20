@@ -120,7 +120,7 @@ const resultEmoji = document.getElementById("result-emoji");
 const resultStats = document.getElementById("result-stats");
 
 const GAME_DURATION = activeDay.prompt2.duration || 10;
-const HIT_TOLERANCE = 14;
+const HIT_TOLERANCE = 10;
 const STRAY_DISTANCE = 11;
 
 function getScoreBadge(score) {
@@ -455,7 +455,7 @@ function recordAndCheckSegment(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 18) {
+    } else if (d <= 14) {
       isNearShape = true;
     }
   }
@@ -521,18 +521,22 @@ function endGame() {
   const onTargetRatio = totalDrawnLength > 0 ? (onTargetLength / totalDrawnLength) : 0;
 
   let finalScore = 0;
-  if (drawnRatio > 2.4 || (drawnRatio > 1.6 && onTargetRatio < 0.45) || onTargetRatio < 0.25) {
+  if (drawnRatio > 2.2 || (drawnRatio > 1.4 && onTargetRatio < 0.40) || onTargetRatio < 0.25 || drawnRatio < 0.15) {
     finalScore = 0;
   } else {
+    let underdrawPenalty = 0;
+    if (drawnRatio < 0.85) {
+      underdrawPenalty = (0.85 - drawnRatio) * 80;
+    }
+    let overdrawPenalty = 0;
+    if (drawnRatio > 1.20) {
+      overdrawPenalty = (drawnRatio - 1.20) * 55;
+    }
     let strayPenalty = 0;
-    if (onTargetRatio < 0.80) {
-      strayPenalty = (0.80 - onTargetRatio) * 50;
+    if (onTargetRatio < 0.85) {
+      strayPenalty = (0.85 - onTargetRatio) * 60;
     }
-    let lengthPenalty = 0;
-    if (drawnRatio > 1.25) {
-      lengthPenalty = (drawnRatio - 1.25) * 45;
-    }
-    finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - strayPenalty - lengthPenalty)));
+    finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - underdrawPenalty - overdrawPenalty - strayPenalty)));
   }
 
   resultEmoji.innerHTML = getScoreBadge(finalScore);
@@ -1020,7 +1024,7 @@ function recordAndCheckSegment5(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 18) {
+    } else if (d <= 14) {
       isNearShape = true;
     }
   }
@@ -1302,18 +1306,22 @@ function endPrompt5() {
   const onTargetRatio = p5TotalDrawnLength > 0 ? (p5OnTargetLength / p5TotalDrawnLength) : 0;
 
   let finalScore = 0;
-  if (drawnRatio > 2.4 || (drawnRatio > 1.6 && onTargetRatio < 0.45) || onTargetRatio < 0.25) {
+  if (drawnRatio > 2.2 || (drawnRatio > 1.4 && onTargetRatio < 0.40) || onTargetRatio < 0.25 || drawnRatio < 0.15) {
     finalScore = 0;
   } else {
+    let underdrawPenalty = 0;
+    if (drawnRatio < 0.85) {
+      underdrawPenalty = (0.85 - drawnRatio) * 80;
+    }
+    let overdrawPenalty = 0;
+    if (drawnRatio > 1.20) {
+      overdrawPenalty = (drawnRatio - 1.20) * 55;
+    }
     let strayPenalty = 0;
-    if (onTargetRatio < 0.80) {
-      strayPenalty = (0.80 - onTargetRatio) * 50;
+    if (onTargetRatio < 0.85) {
+      strayPenalty = (0.85 - onTargetRatio) * 60;
     }
-    let lengthPenalty = 0;
-    if (drawnRatio > 1.25) {
-      lengthPenalty = (drawnRatio - 1.25) * 45;
-    }
-    finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - strayPenalty - lengthPenalty)));
+    finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - underdrawPenalty - overdrawPenalty - strayPenalty)));
   }
 
   p5ResultEmoji.innerHTML = getScoreBadge(finalScore);
