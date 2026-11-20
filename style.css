@@ -148,6 +148,142 @@ header h1 {
   -webkit-touch-callout: none;
 }
 
+#p5-paintCanvas.hidden {
+  display: none !important;
+}
+
+.reaction-arena {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  aspect-ratio: 1 / 1;
+  background-color: #141416;
+  border: 2px solid #2d2d34;
+  border-radius: 14px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  display: block;
+  margin: 0 auto;
+}
+
+.reaction-countdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(20, 20, 22, 0.85);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.countdown-text {
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: #f4f4f5;
+  letter-spacing: -0.02em;
+  animation: countdownPulse 0.4s ease-out;
+}
+
+.countdown-text.countdown-go {
+  font-size: 4.4rem;
+  color: #10b981;
+  animation: countdownPop 0.35s ease-out;
+}
+
+@keyframes countdownPulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes countdownPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.reaction-target {
+  position: absolute;
+  width: clamp(56px, 14vw, 76px);
+  height: clamp(56px, 14vw, 76px);
+  border-radius: 14px;
+  border: 2px solid #52525b;
+  background-color: #27272a;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.8rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.08s ease;
+}
+
+.reaction-target:hover {
+  border-color: #e4e4e7;
+  transform: scale(1.05);
+}
+
+.reaction-target:active {
+  transform: scale(0.92);
+}
+
+.reaction-target.hit {
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(1.3);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.reaction-arena.miss-flash {
+  border-color: #ef4444;
+}
+
+.penalty-floater {
+  position: absolute;
+  color: #ef4444;
+  font-size: 1.4rem;
+  font-weight: 900;
+  pointer-events: none;
+  user-select: none;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+  animation: penaltyFloat 0.7s ease-out forwards;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes penaltyFloat {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60px) scale(1.15);
+  }
+}
+
 .memory-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -279,7 +415,7 @@ button:disabled {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .final-emojis-row {

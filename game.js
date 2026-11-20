@@ -120,7 +120,7 @@ const resultEmoji = document.getElementById("result-emoji");
 const resultStats = document.getElementById("result-stats");
 
 const GAME_DURATION = activeDay.prompt2.duration || 10;
-const HIT_TOLERANCE = 7;
+const HIT_TOLERANCE = 14;
 const STRAY_DISTANCE = 11;
 
 function getScoreBadge(score) {
@@ -455,7 +455,7 @@ function recordAndCheckSegment(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 9) {
+    } else if (d <= 18) {
       isNearShape = true;
     }
   }
@@ -520,24 +520,20 @@ function endGame() {
   const drawnRatio = totalDrawnLength / (targetPerimeter || 1);
   const onTargetRatio = totalDrawnLength > 0 ? (onTargetLength / totalDrawnLength) : 0;
 
-  let precPenalty = 0;
-  if (onTargetRatio < 0.80) {
-    precPenalty = (0.80 - onTargetRatio) * 120;
-  }
-
-  let lengthPenalty = 0;
-  if (drawnRatio > 1.35) {
-    if (drawnRatio <= 1.8) {
-      lengthPenalty = ((drawnRatio - 1.35) / 0.45) * 15;
-    } else {
-      lengthPenalty = 15 + ((drawnRatio - 1.8) / 0.7) * 45;
-      if (drawnRatio > 2.5) {
-        lengthPenalty += (drawnRatio - 2.5) * 40;
-      }
+  let finalScore = 0;
+  if (drawnRatio > 2.4 || (drawnRatio > 1.6 && onTargetRatio < 0.45) || onTargetRatio < 0.25) {
+    finalScore = 0;
+  } else {
+    let strayPenalty = 0;
+    if (onTargetRatio < 0.80) {
+      strayPenalty = (0.80 - onTargetRatio) * 50;
     }
+    let lengthPenalty = 0;
+    if (drawnRatio > 1.25) {
+      lengthPenalty = (drawnRatio - 1.25) * 45;
+    }
+    finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - strayPenalty - lengthPenalty)));
   }
-
-  const finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - precPenalty - lengthPenalty)));
 
   resultEmoji.innerHTML = getScoreBadge(finalScore);
   resultStats.textContent = `${finalScore}% Accuracy`;
@@ -573,13 +569,47 @@ let flippedCards = [];
 let matchedPairs = 0;
 let lockBoard = false;
 
+function parseBadgeEntry(raw) {
+  if (!raw) return { html: "❓", text: "❓" };
+  if (typeof raw === "string") {
+    if (raw === ":brilliant:" || raw === "images/brilliant.png") {
+      return { html: `<img src="images/brilliant.png" class="badge-img" alt="Brilliant!">`, text: ":brilliant:" };
+    }
+    if (raw === ":blunder:" || raw === "images/blunder.png") {
+      return { html: `<img src="images/blunder.png" class="badge-img" alt="Blunder!">`, text: ":blunder:" };
+    }
+    return { html: raw, text: raw };
+  }
+  const html = raw.badge || (raw.emoji === ":brilliant:" || raw.emoji === "images/brilliant.png" ? `<img src="images/brilliant.png" class="badge-img" alt="Brilliant!">` : (raw.emoji === ":blunder:" || raw.emoji === "images/blunder.png" ? `<img src="images/blunder.png" class="badge-img" alt="Blunder!">` : raw.emoji));
+  const text = raw.shareEmoji || raw.emoji || (raw.badge ? ":badge:" : "❓");
+  return { html, text };
+}
+
+function getTimeScoreBadge(sec, tiers) {
+  if (!tiers || tiers.length === 0) {
+    return { html: "🎯", text: "🎯" };
+  }
+  for (const tier of tiers) {
+    const limit = tier.time !== undefined ? tier.time : (tier.maxTime !== undefined ? tier.maxTime : tier.seconds);
+    if (limit === undefined || limit === null || sec <= limit) {
+      return parseBadgeEntry(tier);
+    }
+  }
+  return parseBadgeEntry(tiers[tiers.length - 1]);
+}
+
 function getMemoryBadge(seconds) {
-  if (seconds <= 6.0) return "🐇";
-  if (seconds <= 8.0) return "🐘";
-  if (seconds <= 10.0) return "🐈";
-  if (seconds <= 12.0) return "🦘";
-  if (seconds <= 15.0) return "🦐";
-  return "🐢";
+  const config = activeDay && activeDay.prompt3;
+  const defaultP3Tiers = [
+    { time: 6.0, emoji: "🐇" },
+    { time: 8.0, emoji: "🐘" },
+    { time: 10.0, emoji: "🐈" },
+    { time: 12.0, emoji: "🦘" },
+    { time: 15.0, emoji: "🦐" },
+    { emoji: "🐢" }
+  ];
+  const tiers = (config && config.tiers) || defaultP3Tiers;
+  return getTimeScoreBadge(seconds, tiers).html;
 }
 
 function startPrompt3() {
@@ -648,11 +678,22 @@ function endPrompt3() {
   clearInterval(p3TimerId);
   const finalSeconds = parseFloat(((Date.now() - p3StartTime) / 1000).toFixed(1));
 
-  const badge = getMemoryBadge(finalSeconds);
-  p3ResultEmoji.innerHTML = badge;
+  const config = activeDay && activeDay.prompt3;
+  const defaultP3Tiers = [
+    { time: 6.0, emoji: "🐇" },
+    { time: 8.0, emoji: "🐘" },
+    { time: 10.0, emoji: "🐈" },
+    { time: 12.0, emoji: "🦘" },
+    { time: 15.0, emoji: "🦐" },
+    { emoji: "🐢" }
+  ];
+  const tiers = (config && config.tiers) || defaultP3Tiers;
+  const badgeResult = getTimeScoreBadge(finalSeconds, tiers);
+
+  p3ResultEmoji.innerHTML = badgeResult.html;
   p3ResultStats.textContent = `${finalSeconds}s`;
-  gameResultsHTML[2] = badge;
-  gameResultsText[2] = badge;
+  gameResultsHTML[2] = badgeResult.html;
+  gameResultsText[2] = badgeResult.text;
   p3ResultCard.classList.remove("hidden");
   saveGameState({ currentPrompt: 4, gameResultsHTML: gameResultsHTML, gameResultsText: gameResultsText });
 }
@@ -778,9 +819,17 @@ p4NextBtn.addEventListener("click", () => {
 });
 
 const prompt5Section = document.getElementById("prompt-5-section");
+const p5Title = document.getElementById("p5-title");
+const p5Instruction = document.getElementById("p5-instruction");
 const p5Canvas = document.getElementById("p5-paintCanvas");
 const p5Ctx = p5Canvas.getContext("2d");
 
+const p5ReactionArena = document.getElementById("p5-reaction-arena");
+const p5ReactionCountdown = document.getElementById("p5-reaction-countdown");
+const p5CountdownText = document.getElementById("p5-countdown-text");
+const p5Controls = document.getElementById("p5-controls");
+
+const p5TimerLabel = document.getElementById("p5-timer-label");
 const p5TimerDisplay = document.getElementById("p5-timer-display");
 const p5DoneBtn = document.getElementById("p5-done-btn");
 const p5ResultCard = document.getElementById("p5-result-card");
@@ -805,6 +854,7 @@ let p5GuideCanvas = null;
 let p5GuideImg = null;
 
 function setupDrawingTarget5() {
+  if (isPrompt5Reaction()) return;
   const config = activeDay && activeDay.prompt5;
   if (config && (config.image || (config.points && config.points.length > 0))) {
     if (config.points && config.points.length > 0) {
@@ -970,7 +1020,7 @@ function recordAndCheckSegment5(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 9) {
+    } else if (d <= 18) {
       isNearShape = true;
     }
   }
@@ -990,7 +1040,51 @@ function recordAndCheckPoint5(pos) {
   }
 }
 
+let p5ReactionActive = false;
+let p5ReactionStartTime = 0;
+let p5PenaltySeconds = 0;
+let p5ReactionTargetsTotal = 5;
+let p5ReactionTargetsLeft = 5;
+let p5ReactionMisses = 0;
+let p5CountdownTimer1 = null;
+let p5CountdownTimer2 = null;
+
+function isPrompt5Reaction() {
+  const p5 = activeDay && activeDay.prompt5;
+  if (!p5) return false;
+  if (p5.type === "reaction") return true;
+  if (currentDayNumber >= 3 && (!p5.points || p5.points.length === 0)) return true;
+  return false;
+}
+
+function getReactionBadgeHTML(sec) {
+  const config = activeDay && activeDay.prompt5;
+  const tiers = (config && config.tiers) || [];
+  return getTimeScoreBadge(sec, tiers).html;
+}
+
+function getReactionShareEmoji(sec) {
+  const config = activeDay && activeDay.prompt5;
+  const tiers = (config && config.tiers) || [];
+  return getTimeScoreBadge(sec, tiers).text;
+}
+
 function startPrompt5() {
+  if (isPrompt5Reaction()) {
+    const config = activeDay && activeDay.prompt5;
+    const totalCount = (config && (config.targetCount || config.squares || config.count)) || 5;
+    if (p5Title) p5Title.textContent = (config && config.title) || "Prompt #5: Quick Reflexes";
+    if (p5Instruction) p5Instruction.textContent = (config && config.instruction) || `Click all ${totalCount} targets as fast as you can!`;
+    startPrompt5Reaction();
+    return;
+  }
+
+  if (p5Title) p5Title.textContent = "Prompt #5: Draw again";
+  if (p5Instruction) p5Instruction.textContent = "Time to draw again. Noob.";
+  p5Canvas.classList.remove("hidden");
+  if (p5ReactionArena) p5ReactionArena.classList.add("hidden");
+  if (p5Controls) p5Controls.classList.remove("hidden");
+
   p5IsPlaying = true;
   p5IsDrawing = false;
   p5TimeLeft = P5_DURATION;
@@ -1021,6 +1115,178 @@ function startPrompt5() {
   }, 1000);
 }
 
+function startPrompt5Reaction() {
+  p5ReactionActive = false;
+  clearInterval(p5TimerId);
+  clearTimeout(p5CountdownTimer1);
+  clearTimeout(p5CountdownTimer2);
+
+  const config = activeDay && activeDay.prompt5;
+  p5ReactionTargetsTotal = (config && (config.targetCount || config.squares || config.count)) || 5;
+  p5ReactionTargetsLeft = p5ReactionTargetsTotal;
+  p5ReactionMisses = 0;
+  p5PenaltySeconds = 0;
+
+  if (p5TimerLabel) p5TimerLabel.textContent = "Time:";
+  p5TimerDisplay.textContent = "0.00";
+
+  p5Canvas.classList.add("hidden");
+  if (p5Controls) p5Controls.classList.add("hidden");
+  if (p5ReactionArena) {
+    p5ReactionArena.classList.remove("hidden");
+    p5ReactionArena.querySelectorAll(".reaction-target").forEach(el => el.remove());
+    p5ReactionArena.querySelectorAll(".penalty-floater").forEach(el => el.remove());
+  }
+  p5ResultCard.classList.add("hidden");
+
+  if (p5ReactionCountdown && p5CountdownText) {
+    p5ReactionCountdown.classList.remove("hidden");
+    p5CountdownText.textContent = "Ready...";
+    p5CountdownText.classList.remove("countdown-go");
+
+    p5CountdownTimer1 = setTimeout(() => {
+      p5CountdownText.textContent = "GO!";
+      p5CountdownText.classList.add("countdown-go");
+
+      p5CountdownTimer2 = setTimeout(() => {
+        p5ReactionCountdown.classList.add("hidden");
+        p5ReactionActive = true;
+        p5ReactionStartTime = performance.now();
+        spawnReactionTargets();
+
+        p5TimerId = setInterval(() => {
+          if (!p5ReactionActive) return;
+          const currentTotal = ((performance.now() - p5ReactionStartTime) / 1000) + p5PenaltySeconds;
+          p5TimerDisplay.textContent = currentTotal.toFixed(2);
+        }, 25);
+      }, 400);
+    }, 900);
+  } else {
+    p5ReactionActive = true;
+    p5ReactionStartTime = performance.now();
+    spawnReactionTargets();
+    p5TimerId = setInterval(() => {
+      if (!p5ReactionActive) return;
+      const currentTotal = ((performance.now() - p5ReactionStartTime) / 1000) + p5PenaltySeconds;
+      p5TimerDisplay.textContent = currentTotal.toFixed(2);
+    }, 25);
+  }
+}
+
+function spawnReactionTargets() {
+  if (!p5ReactionArena) return;
+  p5ReactionArena.querySelectorAll(".reaction-target").forEach(el => el.remove());
+
+  const config = activeDay && activeDay.prompt5;
+  const imgSrc = config && config.image;
+  const count = p5ReactionTargetsTotal;
+  const placed = [];
+
+  const sizePct = count > 8 ? 13 : 16;
+  const minDist = count > 8 ? 14 : (count > 6 ? 16 : 18);
+
+  for (let i = 0; i < count; i++) {
+    let x = 10;
+    let y = 10;
+    let valid = false;
+    let attempts = 0;
+
+    while (!valid && attempts < 150) {
+      attempts++;
+      x = 6 + Math.random() * (88 - sizePct - 6);
+      y = 6 + Math.random() * (88 - sizePct - 6);
+
+      valid = true;
+      for (const p of placed) {
+        const dx = x - p.x;
+        const dy = y - p.y;
+        if (Math.hypot(dx, dy) < minDist) {
+          valid = false;
+          break;
+        }
+      }
+    }
+
+    placed.push({ x, y });
+
+    const target = document.createElement("div");
+    target.className = "reaction-target";
+    target.style.left = x + "%";
+    target.style.top = y + "%";
+
+    if (imgSrc) {
+      target.style.backgroundImage = `url("${imgSrc}")`;
+    } else {
+      target.textContent = "🎯";
+    }
+
+    target.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!p5ReactionActive) return;
+
+      target.classList.add("hit");
+      setTimeout(() => target.remove(), 140);
+
+      p5ReactionTargetsLeft--;
+      if (p5ReactionTargetsLeft <= 0) {
+        endPrompt5Reaction();
+      }
+    });
+
+    p5ReactionArena.appendChild(target);
+  }
+}
+
+if (p5ReactionArena) {
+  p5ReactionArena.addEventListener("pointerdown", (e) => {
+    if (!p5ReactionActive) return;
+    if (e.target.closest(".reaction-target") || e.target.closest(".reaction-countdown-overlay")) return;
+
+    p5ReactionMisses++;
+    p5PenaltySeconds += 0.5;
+
+    const currentTotal = ((performance.now() - p5ReactionStartTime) / 1000) + p5PenaltySeconds;
+    p5TimerDisplay.textContent = currentTotal.toFixed(2);
+
+    p5ReactionArena.classList.add("miss-flash");
+    setTimeout(() => p5ReactionArena.classList.remove("miss-flash"), 150);
+
+    const rect = p5ReactionArena.getBoundingClientRect();
+    const floater = document.createElement("div");
+    floater.className = "penalty-floater";
+    floater.textContent = "+0.5s";
+    floater.style.left = (e.clientX - rect.left) + "px";
+    floater.style.top = (e.clientY - rect.top) + "px";
+    p5ReactionArena.appendChild(floater);
+    setTimeout(() => floater.remove(), 700);
+  });
+}
+
+function endPrompt5Reaction() {
+  if (!p5ReactionActive) return;
+  p5ReactionActive = false;
+  clearInterval(p5TimerId);
+
+  const finalTimeSec = parseFloat((((performance.now() - p5ReactionStartTime) / 1000) + p5PenaltySeconds).toFixed(2));
+  p5TimerDisplay.textContent = finalTimeSec.toFixed(2);
+
+  const badgeHTML = getReactionBadgeHTML(finalTimeSec);
+  const shareEmoji = getReactionShareEmoji(finalTimeSec);
+
+  p5ResultEmoji.innerHTML = badgeHTML;
+  if (p5ReactionMisses > 0) {
+    p5ResultStats.textContent = `${finalTimeSec.toFixed(2)}s (+${(p5ReactionMisses * 0.5).toFixed(1)}s penalty)`;
+  } else {
+    p5ResultStats.textContent = `${finalTimeSec.toFixed(2)}s`;
+  }
+
+  gameResultsHTML[4] = badgeHTML;
+  gameResultsText[4] = shareEmoji;
+  p5ResultCard.classList.remove("hidden");
+  saveGameState({ currentPrompt: 6, gameResultsHTML: gameResultsHTML, gameResultsText: gameResultsText });
+}
+
 function endPrompt5() {
   clearInterval(p5TimerId);
   p5IsPlaying = false;
@@ -1035,24 +1301,20 @@ function endPrompt5() {
   const drawnRatio = p5TotalDrawnLength / (p5TargetPerimeter || 1);
   const onTargetRatio = p5TotalDrawnLength > 0 ? (p5OnTargetLength / p5TotalDrawnLength) : 0;
 
-  let precPenalty = 0;
-  if (onTargetRatio < 0.80) {
-    precPenalty = (0.80 - onTargetRatio) * 120;
-  }
-
-  let lengthPenalty = 0;
-  if (drawnRatio > 1.35) {
-    if (drawnRatio <= 1.8) {
-      lengthPenalty = ((drawnRatio - 1.35) / 0.45) * 15;
-    } else {
-      lengthPenalty = 15 + ((drawnRatio - 1.8) / 0.7) * 45;
-      if (drawnRatio > 2.5) {
-        lengthPenalty += (drawnRatio - 2.5) * 40;
-      }
+  let finalScore = 0;
+  if (drawnRatio > 2.4 || (drawnRatio > 1.6 && onTargetRatio < 0.45) || onTargetRatio < 0.25) {
+    finalScore = 0;
+  } else {
+    let strayPenalty = 0;
+    if (onTargetRatio < 0.80) {
+      strayPenalty = (0.80 - onTargetRatio) * 50;
     }
+    let lengthPenalty = 0;
+    if (drawnRatio > 1.25) {
+      lengthPenalty = (drawnRatio - 1.25) * 45;
+    }
+    finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - strayPenalty - lengthPenalty)));
   }
-
-  const finalScore = Math.max(0, Math.min(100, Math.round(coveragePercent - precPenalty - lengthPenalty)));
 
   p5ResultEmoji.innerHTML = getScoreBadge(finalScore);
   p5ResultStats.textContent = `${finalScore}% Accuracy`;

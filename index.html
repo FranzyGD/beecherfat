@@ -124,21 +124,26 @@
     <div id="prompt-5-section" class="prompt-section hidden">
       <header>
         <div class="prompt-badge">5 of 6</div>
-        <h1>Prompt #5: Draw again</h1>
-        <p class="instruction">Time to draw again. Noob.</p>
+        <h1 id="p5-title">Prompt #5: Draw again</h1>
+        <p id="p5-instruction" class="instruction">Time to draw again. Noob.</p>
       </header>
 
       <div class="status-bar">
         <div class="timer-box">
-          ⏱️ Time Left: <span id="p5-timer-display">10</span>s
+          ⏱️ <span id="p5-timer-label">Time Left:</span> <span id="p5-timer-display">10</span>s
         </div>
       </div>
 
       <div class="canvas-wrapper">
         <canvas id="p5-paintCanvas" width="400" height="400"></canvas>
+        <div id="p5-reaction-arena" class="reaction-arena hidden">
+          <div id="p5-reaction-countdown" class="reaction-countdown-overlay hidden">
+            <span id="p5-countdown-text" class="countdown-text">Ready...</span>
+          </div>
+        </div>
       </div>
 
-      <div class="controls">
+      <div class="controls" id="p5-controls">
         <button id="p5-done-btn">Done</button>
       </div>
 
