@@ -120,8 +120,8 @@ const resultEmoji = document.getElementById("result-emoji");
 const resultStats = document.getElementById("result-stats");
 
 const GAME_DURATION = activeDay.prompt2.duration || 10;
-const HIT_TOLERANCE = 10;
-const STRAY_DISTANCE = 11;
+const HIT_TOLERANCE = 7;
+const STRAY_DISTANCE = 10;
 
 function getScoreBadge(score) {
   if (score >= 90) {
@@ -455,7 +455,7 @@ function recordAndCheckSegment(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 14) {
+    } else if (d <= STRAY_DISTANCE) {
       isNearShape = true;
     }
   }
@@ -1024,7 +1024,7 @@ function recordAndCheckSegment5(p1, p2) {
     if (d <= HIT_TOLERANCE) {
       pt.hit = true;
       isNearShape = true;
-    } else if (d <= 14) {
+    } else if (d <= STRAY_DISTANCE) {
       isNearShape = true;
     }
   }
