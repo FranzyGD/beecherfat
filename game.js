@@ -1,6 +1,20 @@
 const START_EPOCH_MS = new Date("2026-11-18T19:00:00-03:00").getTime();
-const diffMs = Date.now() - START_EPOCH_MS;
-const calculatedDay = diffMs >= 0 ? Math.floor(diffMs / 86400000) + 1 : 1;
+function getCalculatedDay() {
+  const diffMs = Date.now() - START_EPOCH_MS;
+  if (diffMs < 0) return 1;
+  const totalPeriods = Math.floor(diffMs / 86400000);
+  let day = 1;
+  for (let i = 1; i <= totalPeriods; i++) {
+    const periodStart = START_EPOCH_MS + i * 86400000;
+    const argDate = new Date(periodStart - 3 * 3600 * 1000);
+    const dayOfWeek = argDate.getUTCDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      day++;
+    }
+  }
+  return day;
+}
+const calculatedDay = getCalculatedDay();
 
 const urlParams = new URLSearchParams(window.location.search);
 const currentDayNumber = parseInt(urlParams.get("day")) || Math.max(1, calculatedDay);
