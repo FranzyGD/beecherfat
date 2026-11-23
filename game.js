@@ -712,6 +712,17 @@ if (p2SubmitArtBtn) {
   });
 }
 
+if (p2ArtistName) {
+  p2ArtistName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (p2SubmitArtBtn && !p2SubmitArtBtn.disabled) {
+        p2SubmitArtBtn.click();
+      }
+    }
+  });
+}
+
 function saveGalleryDrawing(dataUrl, author) {
   try {
     const key = "fuckdle_gallery_day_" + currentDayNumber;
@@ -743,7 +754,11 @@ function renderGallerySection() {
       .onSnapshot((snapshot) => {
         galleryGrid.innerHTML = "";
         if (snapshot.empty) {
-          renderLocalGallery();
+          const emptyNotice = document.createElement("div");
+          emptyNotice.style.color = "#71717a";
+          emptyNotice.style.fontSize = "0.85rem";
+          emptyNotice.textContent = "(No drawings submitted yet)";
+          galleryGrid.appendChild(emptyNotice);
           return;
         }
         snapshot.forEach(doc => {
@@ -1931,6 +1946,9 @@ function checkSavedGame() {
   }
 
   if (urlParams.get("reset") === "true" || urlParams.get("reset") === "1") {
+    try {
+      localStorage.removeItem("fuckdle_gallery_day_" + currentDayNumber);
+    } catch (e) {}
     return;
   }
 
