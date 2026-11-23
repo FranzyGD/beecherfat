@@ -620,16 +620,23 @@ function endGame() {
     renderScene();
     const drawingData = canvas.toDataURL("image/png");
     resultEmoji.innerHTML = "🎨";
-    resultStats.textContent = "Submitted";
+    resultStats.textContent = "Finished!";
     gameResultsHTML[1] = "🎨";
     gameResultsText[1] = "🎨";
     if (p2PreviewBox && p2DrawingImg) {
       p2DrawingImg.src = drawingData;
       p2PreviewBox.classList.remove("hidden");
     }
-    const rememberedName = (p2ArtistName && p2ArtistName.value.trim()) || localStorage.getItem("fuckdle_artist_name") || "";
-    if (p2ArtistName) p2ArtistName.value = rememberedName;
-    uploadDrawingToFirestore(drawingData, rememberedName);
+    if (p2ArtistName) {
+      p2ArtistName.value = localStorage.getItem("fuckdle_artist_name") || "";
+    }
+    if (p2SubmitArtBtn) {
+      p2SubmitArtBtn.disabled = false;
+      p2SubmitArtBtn.textContent = "Add to Gallery 🎨";
+    }
+    if (p2GalleryStatus) {
+      p2GalleryStatus.textContent = "";
+    }
     resultCard.classList.remove("hidden");
     saveGameState({ currentPrompt: 3, gameResultsHTML: gameResultsHTML, gameResultsText: gameResultsText, p2Drawing: drawingData });
     return;
@@ -700,6 +707,8 @@ if (p2SubmitArtBtn) {
     const drawingData = canvas.toDataURL("image/png");
     const name = p2ArtistName ? p2ArtistName.value : "";
     uploadDrawingToFirestore(drawingData, name);
+    p2SubmitArtBtn.disabled = true;
+    p2SubmitArtBtn.textContent = "Added! ✅";
   });
 }
 
@@ -768,10 +777,6 @@ function renderLocalGallery() {
     const raw = localStorage.getItem(key);
     if (raw) list = JSON.parse(raw);
   } catch (e) {}
-  const savedState = getSavedState();
-  if (savedState && savedState.p2Drawing && !list.some(item => item.data === savedState.p2Drawing)) {
-    list.unshift({ id: "user", data: savedState.p2Drawing, label: localStorage.getItem("fuckdle_artist_name") || "You" });
-  }
   if (list.length === 0) {
     const emptyNotice = document.createElement("div");
     emptyNotice.style.color = "#71717a";
@@ -1879,6 +1884,7 @@ copyShareBtn.addEventListener("click", () => {
 function checkSavedGame() {
   if (urlParams.get("reset") === "true" || urlParams.get("reset") === "1") {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("fuckdle_gallery_day_" + currentDayNumber);
   }
 
   const jumpPrompt = parseInt(urlParams.get("prompt"));
@@ -1930,10 +1936,6 @@ function checkSavedGame() {
 
   const saved = getSavedState();
   if (!saved) return;
-
-  if (saved.p2Drawing) {
-    saveGalleryDrawing(saved.p2Drawing);
-  }
 
   if (saved.gameResultsHTML) {
     for (let i = 0; i < 6; i++) {
