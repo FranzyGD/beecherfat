@@ -171,5 +171,88 @@ const dailyData = {
       acceptedAnswers: ["april","beecher","choner"],
       author: "April"
     }
+  },
+  4: {
+    prompt1: {
+      hiddenImage: "days/day4/discord_hidden.png",
+      revealedImage: "days/day4/discord_revealed.png",
+      acceptedAnswers: ["xholeda","joe","joey"]
+    },
+    prompt2: {
+      type: "freestyle",
+      title: "Prompt #2: Free Draw",
+      instruction: "Until I find a replacement for this prompt, draw whatever you want!, it'll be added to a gallery where you can see everyone's drawings.",
+      duration: 30
+    },
+    prompt3: {
+      images: [
+        "days/day4/mem1.png",
+        "days/day4/mem2.png",
+        "days/day4/mem3.png",
+        "days/day4/mem4.png"
+      ],
+      tiers: [
+        { time: 6.0, emoji: "🐇" },
+        { time: 8.0, emoji: "🐘" },
+        { time: 10.0, emoji: "🐈" },
+        { time: 12.0, emoji: "🦘" },
+        { time: 15.0, emoji: "🦐" },
+        { emoji: "🐢" }
+      ]
+    },
+    prompt4: {
+      question: "Prompt #4: YAGA Krillion",
+      instruction: "Name a game played by YAGA (has to be more than one person)",
+      duration: 20,
+      database: [
+        { names: ["Geometry Dash","GD"], label: "Plankton" },
+        { names: ["risk of rain","risk of rain 2","ror2"], label: "Plankton" },
+        { names: ["valorant"], label: "Plankton" },
+        { names: ["crab game"], label: "Schooler" },
+        { names: ["among us"], label: "Schooler" },
+        { names: ["minecraft"], label: "Schooler" },
+        { names: ["isaac","tboi","the binding of isaac"], label: "Schooler" },
+        { names: ["jackbox"], label: "Rare" },
+        { names: ["deadlock"], label: "Rare" },
+        { names: ["sts2","slay the spire","slay the spire 2"], label: "Rare" },
+        { names: ["repo","r.e.p.o"], label: "Rare" },
+        { names: ["dbd","dead by daylight"], label: "Deep Cut" },
+        { names: ["how to fish"], label: "Deep Cut" },
+        { names: ["marvel rivals"], label: "Deep Cut" },
+        { names: ["project zomboid"], label: "Deep Cut" },
+        { names: ["star was empire at war","star wars: empire at war","star wars"], label: "One in a Krillion" },
+      ]
+    },
+    prompt5: {
+      type: "reaction",
+      title: "Prompt #5: osu! ahh",
+      instruction: "Click all the targets as fast as you can! Missing adds +0.5s to your time.",
+      image: "days/day4/target.png",
+      targetCount: 15,
+      tiers: [
+        { time: 4.5, emoji: ":brilliant:" },
+        { time: 5.5, emoji: "🐘" },
+        { time: 6.5, emoji: "🐈" },
+        { time: 7.5, emoji: "🦘" },
+        { time: 8.5, emoji: "🦐" },
+        { emoji: ":blunder:" }
+      ]
+    },
+    prompt6: {
+      foodImage: "days/day4/food.png",
+      revealedImage: "days/day4/food_revealed.png",
+      acceptedAnswers: ["legc","leg"],
+      author: "Legc"
+    }
   }
+};
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPfebAcwjCKFkaq1GkC-ICfA3Uo5gJmGw",
+  authDomain: "beecherfat.firebaseapp.com",
+  projectId: "beecherfat",
+  storageBucket: "beecherfat.firebasestorage.app",
+  messagingSenderId: "858578360797",
+  appId: "1:858578360797:web:7ad10546f148147ee73e34",
+  measurementId: "G-B3DCNRB05X"
 };

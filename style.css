@@ -600,3 +600,88 @@ button:disabled {
     gap: 8px;
   }
 }
+
+#paintCanvas.white-canvas {
+  background-color: #ffffff;
+  border: 2px solid #e4e4e7;
+}
+
+.p2-preview-box {
+  margin: 14px auto 8px auto;
+  max-width: 200px;
+}
+
+.p2-drawing-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid #3f3f46;
+  background-color: #ffffff;
+  display: block;
+  object-fit: contain;
+}
+
+.final-gallery-section {
+  margin-top: 24px;
+  background-color: #1a1a1e;
+  border: 1px solid #2d2d34;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.gallery-card {
+  background-color: #27272a;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #3f3f46;
+  text-align: center;
+  padding: 6px;
+}
+
+.gallery-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  display: block;
+  object-fit: contain;
+}
+
+.gallery-card-label {
+  font-size: 0.75rem;
+  color: #a1a1aa;
+  margin-top: 6px;
+}
+
+.artist-name-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.artist-name-row input {
+  flex: 1;
+  max-width: 170px;
+  background-color: #141416;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: #ededed;
+}
+
+.p2-gallery-status {
+  font-size: 0.8rem;
+  color: #22c55e;
+  margin-top: 6px;
+  min-height: 18px;
+}

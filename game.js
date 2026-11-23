@@ -135,13 +135,32 @@ p1NextBtn.addEventListener("click", () => {
 const canvas = document.getElementById("paintCanvas");
 const ctx = canvas.getContext("2d");
 
+const p2Title = document.getElementById("p2-title");
+const p2Instruction = document.getElementById("p2-instruction");
+const p2ClearBtn = document.getElementById("p2-clear-btn");
+const p2PreviewBox = document.getElementById("p2-preview-box");
+const p2DrawingImg = document.getElementById("p2-drawing-img");
+const p2ArtistName = document.getElementById("p2-artist-name");
+const p2SubmitArtBtn = document.getElementById("p2-submit-art-btn");
+const p2GalleryStatus = document.getElementById("p2-gallery-status");
 const timerDisplay = document.getElementById("timer-display");
 const doneBtn = document.getElementById("done-btn");
 const resultCard = document.getElementById("result-card");
 const resultEmoji = document.getElementById("result-emoji");
 const resultStats = document.getElementById("result-stats");
+const finalGallerySection = document.getElementById("final-gallery-section");
+const galleryGrid = document.getElementById("gallery-grid");
 
-const GAME_DURATION = activeDay.prompt2.duration || 10;
+let db = null;
+if (typeof firebase !== "undefined" && typeof firebaseConfig !== "undefined" && firebaseConfig.projectId) {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } catch (err) {}
+}
+
+const isFreestyle2 = Boolean(activeDay && activeDay.prompt2 && activeDay.prompt2.type === "freestyle");
+const GAME_DURATION = (activeDay && activeDay.prompt2 && activeDay.prompt2.duration) || 10;
 const HIT_TOLERANCE = 6;
 const STRAY_DISTANCE = 11;
 
@@ -303,6 +322,18 @@ let guideImg = null;
 
 function setupDrawingTarget2() {
   const config = activeDay && activeDay.prompt2;
+  if (config && config.type === "freestyle") {
+    if (p2Title) p2Title.textContent = config.title || "Prompt #2: Free Draw";
+    if (p2Instruction) p2Instruction.textContent = config.instruction || "Draw whatever you want before the timer runs out!";
+    canvas.classList.add("white-canvas");
+    if (p2ClearBtn) p2ClearBtn.classList.remove("hidden");
+    targetCheckpoints = [];
+    targetPerimeter = 0;
+    guideCanvas = null;
+    guideImg = null;
+    renderScene();
+    return;
+  }
   if (config && (config.image || (config.points && config.points.length > 0))) {
     if (config.points && config.points.length > 0) {
       targetCheckpoints = config.points.map(p => ({ x: p[0], y: p[1], hit: false }));
@@ -345,9 +376,45 @@ function setupDrawingTarget2() {
   }
 }
 
+if (p2ClearBtn) {
+  p2ClearBtn.addEventListener("click", () => {
+    if (!isPlaying) return;
+    strokes = [];
+    currentStroke = [];
+    lastPoint = null;
+    renderScene();
+  });
+}
+
 setupDrawingTarget2();
 
 function renderScene() {
+  if (isFreestyle2) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#18181b";
+    ctx.fillStyle = "#18181b";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const stroke of strokes) {
+      if (stroke.length === 0) continue;
+      if (stroke.length === 1) {
+        ctx.beginPath();
+        ctx.arc(stroke[0].x, stroke[0].y, 2, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+      ctx.beginPath();
+      ctx.moveTo(stroke[0].x, stroke[0].y);
+      for (let i = 1; i < stroke.length; i++) {
+        ctx.lineTo(stroke[i].x, stroke[i].y);
+      }
+      ctx.stroke();
+    }
+    return;
+  }
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (guideCanvas) {
@@ -422,7 +489,9 @@ canvas.addEventListener("pointerdown", (e) => {
   strokes.push(currentStroke);
   lastPoint = pos;
 
-  recordAndCheckPoint(pos);
+  if (!isFreestyle2) {
+    recordAndCheckPoint(pos);
+  }
   renderScene();
 });
 
@@ -433,11 +502,13 @@ canvas.addEventListener("pointermove", (e) => {
   const pos = getCanvasPos(e);
   currentStroke.push(pos);
 
-  if (lastPoint) {
-    totalDrawnLength += Math.hypot(pos.x - lastPoint.x, pos.y - lastPoint.y);
-    recordAndCheckSegment(lastPoint, pos);
-  } else {
-    recordAndCheckPoint(pos);
+  if (!isFreestyle2) {
+    if (lastPoint) {
+      totalDrawnLength += Math.hypot(pos.x - lastPoint.x, pos.y - lastPoint.y);
+      recordAndCheckSegment(lastPoint, pos);
+    } else {
+      recordAndCheckPoint(pos);
+    }
   }
   lastPoint = pos;
 
@@ -514,6 +585,12 @@ function startGame() {
   timerDisplay.textContent = timeLeft;
   doneBtn.disabled = false;
   doneBtn.textContent = "Done";
+  if (p2ClearBtn) {
+    p2ClearBtn.disabled = false;
+  }
+  if (p2PreviewBox) {
+    p2PreviewBox.classList.add("hidden");
+  }
   resultCard.classList.add("hidden");
 
   renderScene();
@@ -535,6 +612,28 @@ function endGame() {
   
   doneBtn.disabled = true;
   doneBtn.textContent = "Attempt Finished";
+  if (p2ClearBtn) {
+    p2ClearBtn.disabled = true;
+  }
+
+  if (isFreestyle2) {
+    renderScene();
+    const drawingData = canvas.toDataURL("image/png");
+    resultEmoji.innerHTML = "🎨";
+    resultStats.textContent = "Submitted";
+    gameResultsHTML[1] = "🎨";
+    gameResultsText[1] = "🎨";
+    if (p2PreviewBox && p2DrawingImg) {
+      p2DrawingImg.src = drawingData;
+      p2PreviewBox.classList.remove("hidden");
+    }
+    const rememberedName = (p2ArtistName && p2ArtistName.value.trim()) || localStorage.getItem("fuckdle_artist_name") || "";
+    if (p2ArtistName) p2ArtistName.value = rememberedName;
+    uploadDrawingToFirestore(drawingData, rememberedName);
+    resultCard.classList.remove("hidden");
+    saveGameState({ currentPrompt: 3, gameResultsHTML: gameResultsHTML, gameResultsText: gameResultsText, p2Drawing: drawingData });
+    return;
+  }
 
   const hitCount = targetCheckpoints.filter(p => p.hit).length;
   const coveragePercent = Math.round((hitCount / (targetCheckpoints.length || 1)) * 100);
@@ -574,6 +673,127 @@ doneBtn.addEventListener("click", () => {
     endGame();
   }
 });
+
+function uploadDrawingToFirestore(drawingData, authorName) {
+  const name = (authorName || "").trim() || "Anonymous";
+  try {
+    localStorage.setItem("fuckdle_artist_name", name);
+  } catch (e) {}
+
+  saveGalleryDrawing(drawingData, name);
+
+  if (p2GalleryStatus) {
+    p2GalleryStatus.textContent = "Saved to gallery! ✅";
+  }
+
+  if (db) {
+    db.collection("drawings_day_" + currentDayNumber).add({
+      drawing: drawingData,
+      author: name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+  }
+}
+
+if (p2SubmitArtBtn) {
+  p2SubmitArtBtn.addEventListener("click", () => {
+    const drawingData = canvas.toDataURL("image/png");
+    const name = p2ArtistName ? p2ArtistName.value : "";
+    uploadDrawingToFirestore(drawingData, name);
+  });
+}
+
+function saveGalleryDrawing(dataUrl, author) {
+  try {
+    const key = "fuckdle_gallery_day_" + currentDayNumber;
+    let list = [];
+    const raw = localStorage.getItem(key);
+    if (raw) list = JSON.parse(raw);
+    const existingIdx = list.findIndex(item => item.data === dataUrl);
+    if (existingIdx >= 0) {
+      list[existingIdx].label = author || list[existingIdx].label;
+    } else {
+      list.push({ id: Date.now(), data: dataUrl, label: author || "You" });
+    }
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch (e) {}
+}
+
+function renderGallerySection() {
+  if (!finalGallerySection || !galleryGrid) return;
+  if (!isFreestyle2) {
+    finalGallerySection.classList.add("hidden");
+    return;
+  }
+  finalGallerySection.classList.remove("hidden");
+
+  if (db) {
+    db.collection("drawings_day_" + currentDayNumber)
+      .orderBy("createdAt", "desc")
+      .limit(60)
+      .onSnapshot((snapshot) => {
+        galleryGrid.innerHTML = "";
+        if (snapshot.empty) {
+          renderLocalGallery();
+          return;
+        }
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (!data || !data.drawing) return;
+          const card = document.createElement("div");
+          card.className = "gallery-card";
+          const img = document.createElement("img");
+          img.src = data.drawing;
+          img.alt = data.author || "Drawing";
+          const lbl = document.createElement("div");
+          lbl.className = "gallery-card-label";
+          lbl.textContent = data.author || "Player";
+          card.appendChild(img);
+          card.appendChild(lbl);
+          galleryGrid.appendChild(card);
+        });
+      }, () => {
+        renderLocalGallery();
+      });
+  } else {
+    renderLocalGallery();
+  }
+}
+
+function renderLocalGallery() {
+  galleryGrid.innerHTML = "";
+  let list = [];
+  try {
+    const key = "fuckdle_gallery_day_" + currentDayNumber;
+    const raw = localStorage.getItem(key);
+    if (raw) list = JSON.parse(raw);
+  } catch (e) {}
+  const savedState = getSavedState();
+  if (savedState && savedState.p2Drawing && !list.some(item => item.data === savedState.p2Drawing)) {
+    list.unshift({ id: "user", data: savedState.p2Drawing, label: localStorage.getItem("fuckdle_artist_name") || "You" });
+  }
+  if (list.length === 0) {
+    const emptyNotice = document.createElement("div");
+    emptyNotice.style.color = "#71717a";
+    emptyNotice.style.fontSize = "0.85rem";
+    emptyNotice.textContent = "(No drawings submitted yet)";
+    galleryGrid.appendChild(emptyNotice);
+    return;
+  }
+  list.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "gallery-card";
+    const img = document.createElement("img");
+    img.src = item.data;
+    img.alt = item.label || "Drawing";
+    const lbl = document.createElement("div");
+    lbl.className = "gallery-card-label";
+    lbl.textContent = item.label || "Player";
+    card.appendChild(img);
+    card.appendChild(lbl);
+    galleryGrid.appendChild(card);
+  });
+}
 
 const p2NextBtn = document.getElementById("p2-next-btn");
 p2NextBtn.addEventListener("click", () => {
@@ -1597,6 +1817,7 @@ function renderFinalScreen() {
     rerollsRemaining = 2;
     generateWords();
   }
+  renderGallerySection();
 }
 
 function renderPoemAssembled() {
@@ -1658,11 +1879,61 @@ copyShareBtn.addEventListener("click", () => {
 function checkSavedGame() {
   if (urlParams.get("reset") === "true" || urlParams.get("reset") === "1") {
     localStorage.removeItem(STORAGE_KEY);
+  }
+
+  const jumpPrompt = parseInt(urlParams.get("prompt"));
+  if (jumpPrompt >= 1 && jumpPrompt <= 6) {
+    introSection.classList.add("hidden");
+    prompt1Section.classList.add("hidden");
+    prompt2Section.classList.add("hidden");
+    prompt3Section.classList.add("hidden");
+    prompt4Section.classList.add("hidden");
+    prompt5Section.classList.add("hidden");
+    prompt6Section.classList.add("hidden");
+    if (jumpPrompt === 1) {
+      prompt1Section.classList.remove("hidden");
+      startPrompt1();
+    } else if (jumpPrompt === 2) {
+      prompt2Section.classList.remove("hidden");
+      startGame();
+    } else if (jumpPrompt === 3) {
+      prompt3Section.classList.remove("hidden");
+      startPrompt3();
+    } else if (jumpPrompt === 4) {
+      prompt4Section.classList.remove("hidden");
+      startPrompt4();
+    } else if (jumpPrompt === 5) {
+      prompt5Section.classList.remove("hidden");
+      startPrompt5();
+    } else if (jumpPrompt === 6) {
+      prompt6Section.classList.remove("hidden");
+      startPrompt6();
+    }
+    return;
+  }
+  if (urlParams.get("prompt") === "final") {
+    introSection.classList.add("hidden");
+    prompt1Section.classList.add("hidden");
+    prompt2Section.classList.add("hidden");
+    prompt3Section.classList.add("hidden");
+    prompt4Section.classList.add("hidden");
+    prompt5Section.classList.add("hidden");
+    prompt6Section.classList.add("hidden");
+    finalScreen.classList.remove("hidden");
+    renderFinalScreen();
+    return;
+  }
+
+  if (urlParams.get("reset") === "true" || urlParams.get("reset") === "1") {
     return;
   }
 
   const saved = getSavedState();
   if (!saved) return;
+
+  if (saved.p2Drawing) {
+    saveGalleryDrawing(saved.p2Drawing);
+  }
 
   if (saved.gameResultsHTML) {
     for (let i = 0; i < 6; i++) {
