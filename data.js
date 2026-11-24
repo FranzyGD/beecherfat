@@ -156,6 +156,8 @@ const dailyData = {
       instruction: "Click all the targets as fast as you can! Missing adds +0.5s to your time.",
       image: "days/day3/target.png",
       targetCount: 8,
+      targetSize: 64,
+      clicksPerTarget: 1,
       tiers: [
         { time: 2.5, emoji: ":brilliant:" },
         { time: 3.5, emoji: "🐘" },
@@ -229,6 +231,8 @@ const dailyData = {
       instruction: "Click all the targets as fast as you can! Missing adds +0.5s to your time.",
       image: "days/day4/target.png",
       targetCount: 15,
+      targetSize: 55,
+      clicksPerTarget: 1,
       tiers: [
         { time: 4.5, emoji: ":brilliant:" },
         { time: 5.5, emoji: "🐘" },
@@ -242,6 +246,79 @@ const dailyData = {
       foodImage: "days/day4/food.png",
       revealedImage: "days/day4/food_revealed.png",
       acceptedAnswers: ["legc","leg"],
+      author: "Legc"
+    }
+  },
+  5: {
+    prompt1: {
+      hiddenImage: "days/day5/discord_hidden.png",
+      revealedImage: "days/day5/discord_revealed.png",
+      acceptedAnswers: ["franzy"]
+    },
+    prompt2: {
+      type: "freestyle",
+      title: "Prompt #2: Free Draw",
+      instruction: "Until I find a replacement for this prompt, draw whatever you want!, it'll be added to a gallery where you can see everyone's drawings.",
+      duration: 30
+    },
+    prompt3: {
+      images: [
+        "days/day5/mem1.png",
+        "days/day5/mem2.png",
+        "days/day5/mem3.png",
+        "days/day5/mem4.png"
+      ],
+      tiers: [
+        { time: 6.0, emoji: "🐇" },
+        { time: 8.0, emoji: "🐘" },
+        { time: 10.0, emoji: "🐈" },
+        { time: 12.0, emoji: "🦘" },
+        { time: 15.0, emoji: "🦐" },
+        { emoji: "🐢" }
+      ]
+    },
+    prompt4: {
+      question: "Prompt #4: YAGA Krillion",
+      instruction: "Name a character currently used in a YAGA member profile picture)",
+      duration: 20,
+      database: [
+        { names: ["belno","belno light"], label: "Plankton" },
+        { names: ["power"], label: "Plankton" },
+        { names: ["mr feast","mr. feast"], label: "Schooler" },
+        { names: ["teto","kasane teto"], label: "Schooler" },
+        { names: ["dess","dess holiday"], label: "Schooler" },
+        { names: ["asriel","asriel dreemurr"], label: "Schooler" },
+        { names: ["pufferfish"], label: "Rare" },
+        { names: ["taiga"], label: "Rare" },
+        { names: ["milton delgado","delgado"], label: "Rare" },
+        { names: ["monkey"], label: "Rare" },
+        { names: ["xave cat","xave's cat"], label: "Deep Cut" },
+        { names: ["kirara","kirara hoshi"], label: "Deep Cut" },
+        { names: ["snowball"], label: "Deep Cut" },
+        { names: ["dr katz","dr. katz","katz"], label: "One in a Krillion" },
+      ]
+    },
+    prompt5: {
+      type: "reaction",
+      title: "Prompt #5: osu! ahh",
+      instruction: "Click all the targets as fast as you can! Missing adds +0.5s to your time.",
+      image: "days/day5/target.png",
+      targetCount: 15,
+      targetSize: 45,
+      clicksPerTarget: [1,4],
+      tiers: [
+        { time: 8, emoji: ":brilliant:" },
+        { time: 9.5, emoji: "🐘" },
+        { time: 11, emoji: "🐈" },
+        { time: 12.5, emoji: "🦘" },
+        { time: 14, emoji: "🦐" },
+        { emoji: ":blunder:" }
+      ]
+    },
+    prompt6: {
+      foodImage: "days/day5/food.png",
+      revealedImage: "days/day5/food_revealed.png",
+      acceptedAnswers: ["krakow","dovi","dovi_bun"],
       author: "Legc"
     }
   }

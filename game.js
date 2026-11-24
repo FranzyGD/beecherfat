@@ -1339,8 +1339,13 @@ function startPrompt5() {
   if (isPrompt5Reaction()) {
     const config = activeDay && activeDay.prompt5;
     const totalCount = (config && (config.targetCount || config.squares || config.count)) || 5;
+    const clicksRequired = config && (config.clicksPerTarget || config.requiredClicks || config.clicks || config.clicksPerSquare);
+    let defaultInstruction = `Click all ${totalCount} targets as fast as you can!`;
+    if (typeof clicksRequired === "number" && clicksRequired > 1) {
+      defaultInstruction = `Click each target ${clicksRequired} times as fast as you can!`;
+    }
     if (p5Title) p5Title.textContent = (config && config.title) || "Prompt #5: Quick Reflexes";
-    if (p5Instruction) p5Instruction.textContent = (config && config.instruction) || `Click all ${totalCount} targets as fast as you can!`;
+    if (p5Instruction) p5Instruction.textContent = (config && config.instruction) || defaultInstruction;
     startPrompt5Reaction();
     return;
   }
@@ -1448,10 +1453,45 @@ function spawnReactionTargets() {
   const count = p5ReactionTargetsTotal;
   const placed = [];
 
-  const sizePct = count > 8 ? 13 : 16;
-  const minDist = count > 8 ? 14 : (count > 6 ? 16 : 18);
+  const rawClicks = config && (config.clicksPerTarget || config.requiredClicks || config.clicks || config.clicksPerSquare);
+  const rawSize = config && (config.targetSize || config.squareSize || config.size);
+
+  const arenaWidth = (p5ReactionArena && p5ReactionArena.clientWidth) || 400;
+
+  const maxClicksVal = Array.isArray(rawClicks) ? Math.max(...rawClicks) : (typeof rawClicks === "number" ? rawClicks : 1);
+  const maxRingsCount = Math.max(0, maxClicksVal - 1);
+  const ringMarginPct = Math.max(0, Math.min(8, (maxRingsCount * 6 / arenaWidth) * 100));
 
   for (let i = 0; i < count; i++) {
+    let targetClicks = 1;
+    if (Array.isArray(rawClicks) && rawClicks.length >= 2) {
+      const minC = Math.max(1, Math.min(rawClicks[0], rawClicks[1]));
+      const maxC = Math.max(1, Math.max(rawClicks[0], rawClicks[1]));
+      targetClicks = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
+    } else if (typeof rawClicks === "number" && rawClicks > 0) {
+      targetClicks = Math.round(rawClicks);
+    }
+
+    let targetSizePx = null;
+    if (Array.isArray(rawSize) && rawSize.length >= 2) {
+      const minS = Math.min(rawSize[0], rawSize[1]);
+      const maxS = Math.max(rawSize[0], rawSize[1]);
+      targetSizePx = Math.round(minS + Math.random() * (maxS - minS));
+    } else if (typeof rawSize === "number" && rawSize > 0) {
+      targetSizePx = Math.round(rawSize);
+    } else if (typeof rawSize === "string" && parseInt(rawSize, 10) > 0) {
+      targetSizePx = parseInt(rawSize, 10);
+    }
+
+    let sizePct = count > 8 ? 13 : 16;
+    if (targetSizePx) {
+      sizePct = Math.max(5, Math.min(36, (targetSizePx / arenaWidth) * 100));
+    }
+
+    const minDist = targetSizePx ? (sizePct + ringMarginPct + 1.5) : (count > 8 ? 14 : (count > 6 ? 16 : 18));
+    const minCoord = 3 + ringMarginPct;
+    const maxCoord = Math.max(minCoord + 2, 94 - sizePct - ringMarginPct);
+
     let x = 10;
     let y = 10;
     let valid = false;
@@ -1459,8 +1499,8 @@ function spawnReactionTargets() {
 
     while (!valid && attempts < 150) {
       attempts++;
-      x = 6 + Math.random() * (88 - sizePct - 6);
-      y = 6 + Math.random() * (88 - sizePct - 6);
+      x = minCoord + Math.random() * (maxCoord - minCoord);
+      y = minCoord + Math.random() * (maxCoord - minCoord);
 
       valid = true;
       for (const p of placed) {
@@ -1480,16 +1520,52 @@ function spawnReactionTargets() {
     target.style.left = x + "%";
     target.style.top = y + "%";
 
+    const baseRadius = targetSizePx ? Math.max(6, Math.min(14, Math.round(targetSizePx * 0.22))) : 14;
+
+    if (targetSizePx) {
+      target.style.width = targetSizePx + "px";
+      target.style.height = targetSizePx + "px";
+      target.style.borderRadius = baseRadius + "px";
+      target.style.fontSize = Math.max(14, Math.round(targetSizePx * 0.45)) + "px";
+    }
+
     if (imgSrc) {
       target.style.backgroundImage = `url("${imgSrc}")`;
-    } else {
+    } else if (targetClicks <= 1) {
       target.textContent = "🎯";
+    }
+
+    let clicksLeft = targetClicks;
+    const extraClicks = targetClicks - 1;
+    const rings = [];
+
+    for (let r = 0; r < extraClicks; r++) {
+      const ring = document.createElement("div");
+      ring.className = "target-ring";
+      const offset = 5 + r * 6;
+      ring.style.inset = `-${offset}px`;
+      ring.style.borderRadius = (baseRadius + offset) + "px";
+      target.appendChild(ring);
+      rings.push(ring);
     }
 
     target.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       e.preventDefault();
       if (!p5ReactionActive) return;
+
+      clicksLeft--;
+      if (clicksLeft > 0) {
+        if (rings.length > 0) {
+          const outerRing = rings.pop();
+          outerRing.classList.add("ring-break");
+          setTimeout(() => outerRing.remove(), 120);
+        }
+        target.classList.remove("target-tapped");
+        void target.offsetWidth;
+        target.classList.add("target-tapped");
+        return;
+      }
 
       target.classList.add("hit");
       setTimeout(() => target.remove(), 140);
