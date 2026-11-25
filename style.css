@@ -286,6 +286,42 @@ header h1 {
   border-color: #ffffff;
 }
 
+.pair-frame {
+  position: absolute;
+  inset: -8px;
+  border: 3px solid var(--pair-color, #38bdf8);
+  background: transparent;
+  pointer-events: auto;
+  box-sizing: border-box;
+  box-shadow: 0 0 10px var(--pair-glow, rgba(56, 189, 248, 0.35));
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.reaction-target:hover .pair-frame {
+  border-color: #ffffff;
+  box-shadow: 0 0 14px var(--pair-color, #38bdf8);
+}
+
+.reaction-target.selected {
+  transform: scale(1.06);
+}
+
+.reaction-target.selected .pair-frame {
+  border-width: 4px;
+  border-color: #ffffff;
+  box-shadow: 0 0 18px var(--pair-color, #38bdf8), inset 0 0 8px var(--pair-glow, rgba(56, 189, 248, 0.4));
+}
+
+.reaction-target.mismatch {
+  animation: pairShake 0.22s ease-in-out;
+}
+
+@keyframes pairShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
 .reaction-arena.miss-flash {
   border-color: #ef4444;
 }

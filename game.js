@@ -1312,13 +1312,14 @@ let p5PenaltySeconds = 0;
 let p5ReactionTargetsTotal = 5;
 let p5ReactionTargetsLeft = 5;
 let p5ReactionMisses = 0;
+let p5SelectedPairTarget = null;
 let p5CountdownTimer1 = null;
 let p5CountdownTimer2 = null;
 
 function isPrompt5Reaction() {
   const p5 = activeDay && activeDay.prompt5;
   if (!p5) return false;
-  if (p5.type === "reaction") return true;
+  if (p5.type === "reaction" || p5.type === "pairs" || p5.mode === "pairs" || p5.pairs === true) return true;
   if (currentDayNumber >= 3 && (!p5.points || p5.points.length === 0)) return true;
   return false;
 }
@@ -1338,13 +1339,17 @@ function getReactionShareEmoji(sec) {
 function startPrompt5() {
   if (isPrompt5Reaction()) {
     const config = activeDay && activeDay.prompt5;
-    const totalCount = (config && (config.targetCount || config.squares || config.count)) || 5;
+    const isPairsMode = Boolean(config && (config.mode === "pairs" || config.pairs === true || config.type === "pairs"));
+    const pairCount = (config && (config.pairCount || Math.floor(((config.targetCount || config.squares || 10)) / 2))) || 5;
+    const totalCount = isPairsMode ? (pairCount * 2) : ((config && (config.targetCount || config.squares || config.count)) || 5);
     const clicksRequired = config && (config.clicksPerTarget || config.requiredClicks || config.clicks || config.clicksPerSquare);
     let defaultInstruction = `Click all ${totalCount} targets as fast as you can!`;
-    if (typeof clicksRequired === "number" && clicksRequired > 1) {
+    if (isPairsMode) {
+      defaultInstruction = `Click each square and then its matching colored pair as fast as you can!`;
+    } else if (typeof clicksRequired === "number" && clicksRequired > 1) {
       defaultInstruction = `Click each target ${clicksRequired} times as fast as you can!`;
     }
-    if (p5Title) p5Title.textContent = (config && config.title) || "Prompt #5: Quick Reflexes";
+    if (p5Title) p5Title.textContent = (config && config.title) || (isPairsMode ? "Prompt #5: Pair Reflexes" : "Prompt #5: Quick Reflexes");
     if (p5Instruction) p5Instruction.textContent = (config && config.instruction) || defaultInstruction;
     startPrompt5Reaction();
     return;
@@ -1388,12 +1393,15 @@ function startPrompt5() {
 
 function startPrompt5Reaction() {
   p5ReactionActive = false;
+  p5SelectedPairTarget = null;
   clearInterval(p5TimerId);
   clearTimeout(p5CountdownTimer1);
   clearTimeout(p5CountdownTimer2);
 
   const config = activeDay && activeDay.prompt5;
-  p5ReactionTargetsTotal = (config && (config.targetCount || config.squares || config.count)) || 5;
+  const isPairsMode = Boolean(config && (config.mode === "pairs" || config.pairs === true || config.type === "pairs"));
+  const pairCount = (config && (config.pairCount || Math.floor(((config.targetCount || config.squares || 10)) / 2))) || 5;
+  p5ReactionTargetsTotal = isPairsMode ? (pairCount * 2) : ((config && (config.targetCount || config.squares || config.count)) || 5);
   p5ReactionTargetsLeft = p5ReactionTargetsTotal;
   p5ReactionMisses = 0;
   p5PenaltySeconds = 0;
@@ -1447,29 +1455,66 @@ function startPrompt5Reaction() {
 function spawnReactionTargets() {
   if (!p5ReactionArena) return;
   p5ReactionArena.querySelectorAll(".reaction-target").forEach(el => el.remove());
+  p5SelectedPairTarget = null;
 
   const config = activeDay && activeDay.prompt5;
   const imgSrc = config && config.image;
-  const count = p5ReactionTargetsTotal;
-  const placed = [];
-
+  const isPairsMode = Boolean(config && (config.mode === "pairs" || config.pairs === true || config.type === "pairs"));
   const rawClicks = config && (config.clicksPerTarget || config.requiredClicks || config.clicks || config.clicksPerSquare);
   const rawSize = config && (config.targetSize || config.squareSize || config.size);
 
   const arenaWidth = (p5ReactionArena && p5ReactionArena.clientWidth) || 400;
 
+  const DEFAULT_PAIR_COLORS = [
+    { color: "#38bdf8", glow: "rgba(56, 189, 248, 0.45)" },
+    { color: "#4ade80", glow: "rgba(74, 222, 128, 0.45)" },
+    { color: "#fbbf24", glow: "rgba(251, 191, 36, 0.45)" },
+    { color: "#c084fc", glow: "rgba(192, 132, 252, 0.45)" },
+    { color: "#f43f5e", glow: "rgba(244, 63, 94, 0.45)" },
+    { color: "#fb923c", glow: "rgba(251, 146, 60, 0.45)" },
+    { color: "#2dd4bf", glow: "rgba(45, 212, 191, 0.45)" },
+    { color: "#e879f9", glow: "rgba(232, 121, 249, 0.45)" },
+    { color: "#a3e635", glow: "rgba(163, 230, 53, 0.45)" },
+    { color: "#60a5fa", glow: "rgba(96, 165, 250, 0.45)" }
+  ];
+
+  let items = [];
+  if (isPairsMode) {
+    const pairCount = (config && (config.pairCount || Math.floor(((config.targetCount || config.squares || 10)) / 2))) || 5;
+    const colorsList = (config && config.pairColors) || DEFAULT_PAIR_COLORS;
+    for (let p = 0; p < pairCount; p++) {
+      const c = colorsList[p % colorsList.length];
+      const colorVal = typeof c === "string" ? c : c.color;
+      const glowVal = typeof c === "string" ? "rgba(255,255,255,0.4)" : (c.glow || "rgba(255,255,255,0.4)");
+      items.push({ pairId: p, color: colorVal, glow: glowVal });
+      items.push({ pairId: p, color: colorVal, glow: glowVal });
+    }
+  } else {
+    const count = p5ReactionTargetsTotal;
+    for (let i = 0; i < count; i++) {
+      items.push({ pairId: null });
+    }
+  }
+
+  const count = items.length;
+  const placed = [];
+
   const maxClicksVal = Array.isArray(rawClicks) ? Math.max(...rawClicks) : (typeof rawClicks === "number" ? rawClicks : 1);
   const maxRingsCount = Math.max(0, maxClicksVal - 1);
-  const ringMarginPct = Math.max(0, Math.min(8, (maxRingsCount * 6 / arenaWidth) * 100));
+  const ringMarginPx = isPairsMode ? 10 : (maxRingsCount * 6);
+  const ringMarginPct = Math.max(0, Math.min(8, (ringMarginPx / arenaWidth) * 100));
 
   for (let i = 0; i < count; i++) {
+    const itemSpec = items[i];
     let targetClicks = 1;
-    if (Array.isArray(rawClicks) && rawClicks.length >= 2) {
-      const minC = Math.max(1, Math.min(rawClicks[0], rawClicks[1]));
-      const maxC = Math.max(1, Math.max(rawClicks[0], rawClicks[1]));
-      targetClicks = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
-    } else if (typeof rawClicks === "number" && rawClicks > 0) {
-      targetClicks = Math.round(rawClicks);
+    if (!isPairsMode) {
+      if (Array.isArray(rawClicks) && rawClicks.length >= 2) {
+        const minC = Math.max(1, Math.min(rawClicks[0], rawClicks[1]));
+        const maxC = Math.max(1, Math.max(rawClicks[0], rawClicks[1]));
+        targetClicks = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
+      } else if (typeof rawClicks === "number" && rawClicks > 0) {
+        targetClicks = Math.round(rawClicks);
+      }
     }
 
     let targetSizePx = null;
@@ -1531,50 +1576,106 @@ function spawnReactionTargets() {
 
     if (imgSrc) {
       target.style.backgroundImage = `url("${imgSrc}")`;
-    } else if (targetClicks <= 1) {
+    } else if (targetClicks <= 1 && !isPairsMode) {
       target.textContent = "🎯";
     }
 
-    let clicksLeft = targetClicks;
-    const extraClicks = targetClicks - 1;
-    const rings = [];
+    if (isPairsMode) {
+      target.dataset.pairId = String(itemSpec.pairId);
+      target.style.setProperty("--pair-color", itemSpec.color);
+      target.style.setProperty("--pair-glow", itemSpec.glow);
 
-    for (let r = 0; r < extraClicks; r++) {
-      const ring = document.createElement("div");
-      ring.className = "target-ring";
-      const offset = 5 + r * 6;
-      ring.style.inset = `-${offset}px`;
-      ring.style.borderRadius = (baseRadius + offset) + "px";
-      target.appendChild(ring);
-      rings.push(ring);
-    }
+      const frame = document.createElement("div");
+      frame.className = "pair-frame";
+      frame.style.borderRadius = (baseRadius + 6) + "px";
+      target.appendChild(frame);
 
-    target.addEventListener("pointerdown", (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (!p5ReactionActive) return;
+      target.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!p5ReactionActive) return;
 
-      clicksLeft--;
-      if (clicksLeft > 0) {
-        if (rings.length > 0) {
-          const outerRing = rings.pop();
-          outerRing.classList.add("ring-break");
-          setTimeout(() => outerRing.remove(), 120);
+        if (!p5SelectedPairTarget) {
+          p5SelectedPairTarget = target;
+          target.classList.add("selected");
+          return;
         }
-        target.classList.remove("target-tapped");
-        void target.offsetWidth;
-        target.classList.add("target-tapped");
-        return;
+
+        if (p5SelectedPairTarget === target) {
+          target.classList.remove("selected");
+          p5SelectedPairTarget = null;
+          return;
+        }
+
+        if (p5SelectedPairTarget.dataset.pairId === target.dataset.pairId) {
+          const first = p5SelectedPairTarget;
+          p5SelectedPairTarget = null;
+          first.classList.remove("selected");
+          first.classList.add("hit");
+          target.classList.add("hit");
+          setTimeout(() => {
+            first.remove();
+            target.remove();
+          }, 140);
+
+          p5ReactionTargetsLeft -= 2;
+          if (p5ReactionTargetsLeft <= 0) {
+            endPrompt5Reaction();
+          }
+        } else {
+          const first = p5SelectedPairTarget;
+          p5SelectedPairTarget = null;
+          first.classList.remove("selected");
+          first.classList.add("mismatch");
+          target.classList.add("mismatch");
+          setTimeout(() => {
+            first.classList.remove("mismatch");
+            target.classList.remove("mismatch");
+          }, 240);
+        }
+      });
+    } else {
+      let clicksLeft = targetClicks;
+      const extraClicks = targetClicks - 1;
+      const rings = [];
+
+      for (let r = 0; r < extraClicks; r++) {
+        const ring = document.createElement("div");
+        ring.className = "target-ring";
+        const offset = 5 + r * 6;
+        ring.style.inset = `-${offset}px`;
+        ring.style.borderRadius = (baseRadius + offset) + "px";
+        target.appendChild(ring);
+        rings.push(ring);
       }
 
-      target.classList.add("hit");
-      setTimeout(() => target.remove(), 140);
+      target.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!p5ReactionActive) return;
 
-      p5ReactionTargetsLeft--;
-      if (p5ReactionTargetsLeft <= 0) {
-        endPrompt5Reaction();
-      }
-    });
+        clicksLeft--;
+        if (clicksLeft > 0) {
+          if (rings.length > 0) {
+            const outerRing = rings.pop();
+            outerRing.classList.add("ring-break");
+            setTimeout(() => outerRing.remove(), 120);
+          }
+          target.classList.remove("target-tapped");
+          void target.offsetWidth;
+          target.classList.add("target-tapped");
+          return;
+        }
+
+        target.classList.add("hit");
+        setTimeout(() => target.remove(), 140);
+
+        p5ReactionTargetsLeft--;
+        if (p5ReactionTargetsLeft <= 0) {
+          endPrompt5Reaction();
+        }
+      });
+    }
 
     p5ReactionArena.appendChild(target);
   }
@@ -1584,6 +1685,11 @@ if (p5ReactionArena) {
   p5ReactionArena.addEventListener("pointerdown", (e) => {
     if (!p5ReactionActive) return;
     if (e.target.closest(".reaction-target") || e.target.closest(".reaction-countdown-overlay")) return;
+
+    if (p5SelectedPairTarget) {
+      p5SelectedPairTarget.classList.remove("selected");
+      p5SelectedPairTarget = null;
+    }
 
     p5ReactionMisses++;
     p5PenaltySeconds += 0.5;
@@ -1608,6 +1714,7 @@ if (p5ReactionArena) {
 function endPrompt5Reaction() {
   if (!p5ReactionActive) return;
   p5ReactionActive = false;
+  p5SelectedPairTarget = null;
   clearInterval(p5TimerId);
 
   const finalTimeSec = parseFloat((((performance.now() - p5ReactionStartTime) / 1000) + p5PenaltySeconds).toFixed(2));
